@@ -1,0 +1,4 @@
+#!/bin/bash
+# jarvis-web — start the Jarvis browser UI
+# Usage: ./jarvis-web
+cd "$(dirname "$0")" && .venv/bin/python web_start.py

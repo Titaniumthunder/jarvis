@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-j">J</span><span class="logo-rest">ARVIS</span>
+      </div>
+      <div class="tagline">Just A Rather Very Intelligent System</div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot" id="statusDot"></div>
+      <div class="status-text" id="statusText">Connecting...</div>
+      <div class="model-badge" id="modelBadge">llama3.2:3b</div>
+    </div>
+  </header>
+
+  <!-- ── Main layout ─────────────────────────────────────────────────────── -->
+  <main>
+    <!-- Message thread -->
+    <div class="chat-container" id="chatContainer">
+      <div class="welcome">
+        <div class="welcome-icon">⬡</div>
+        <div class="welcome-title">JARVIS ONLINE</div>
+        <div class="welcome-sub">How can I assist you today?</div>
+        <div class="suggestion-chips">
+          <button class="chip" onclick="sendSuggestion('What time is it?')">What time is it?</button>
+          <button class="chip" onclick="sendSuggestion('Search for best 3D printers 2025')">Search the web</button>
+          <button class="chip" onclick="sendSuggestion('Design a curved vase')">Design a vase</button>
+          <button class="chip" onclick="sendSuggestion('What is in my Personal Project folder?')">Browse files</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input bar -->
+    <div class="input-wrapper">
+      <div class="input-bar">
+        <div class="input-icon">⬡</div>
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Give me a command..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="sendBtn" onclick="sendMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Press Enter to send · Esc to clear</div>
+    </div>
+  </main>
+
+  <!-- Lightbox for image zoom -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <img id="lightboxImg" alt="Full size preview" />
+    <div class="lightbox-hint">Click anywhere to close</div>
+  </div>
+
+  <!-- Mermaid.js — renders flowcharts, logic gates, sequence diagrams, etc. -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "dark",
+      themeVariables: {
+        background:       "#0d1117",
+        primaryColor:     "#0d2035",
+        primaryTextColor: "#c8d8e8",
+        primaryBorderColor: "#1e3a5f",
+        lineColor:        "#00d4ff",
+        secondaryColor:   "#161d2b",
+        tertiaryColor:    "#111827",
+        edgeLabelBackground: "#0d1117",
+        fontFamily:       "Share Tech Mono, monospace",
+      },
+      flowchart: { curve: "basis", htmlLabels: true },
+    });
+  </script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

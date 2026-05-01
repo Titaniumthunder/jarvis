@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jarvis — Block Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #07090f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 48px;
+    font-family: 'Rajdhani', sans-serif;
+    color: #c8d6e5;
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.012) 2px, rgba(0,212,255,0.012) 4px);
+    pointer-events: none; z-index: 999;
+  }
+  h1 {
+    font-size: 26px; font-weight: 700; letter-spacing: 6px;
+    color: #00d4ff; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .sub {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    letter-spacing: 3px; color: #4a5568; margin-bottom: 36px;
+  }
+  svg { overflow: visible; }
+</style>
+</head>
+<body>
+
+<h1>Jarvis</h1>
+<div class="sub">// SYSTEM BLOCK DIAGRAM</div>
+
+<svg width="100%" viewBox="0 0 960 1020" style="max-width:960px;display:block;margin:0 auto;">
+  <defs>
+    <!-- Arrow markers -->
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#2a3f5f"/>
+    </marker>
+    <marker id="arrow-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#00d4ff"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#00ff88"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#ff9500"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#9b59ff"/>
+    </marker>
+    <marker id="arrow-dim" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#2a3a4a"/>
+    </marker>
+
+    <!-- Glow filters -->
+    <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ROW 1 — INPUT LAYER                                    -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <!-- Label -->
+  <text x="480" y="22" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f" letter-spacing="3">INPUT</text>
+
+  <!-- Browser UI -->
+  <rect x="60" y="32" width="200" height="70" rx="5" fill="#0d1117" stroke="#00d4ff" stroke-width="1.5" filter="url(#glow-cyan)"/>
+  <text x="160" y="54" text-anchor="middle" font-family="Rajdhani" font-size="13" font-weight="700" fill="#00d4ff" letter-spacing="1">🌐  BROWSER UI</text>
+  <text x="160" y="71" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#4a5568">localhost:7777</text>
+  <text x="160" y="87" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Iron Man theme · SSE streaming</text>
+
+  <!-- Voice -->
+  <rect x="380" y="32" width="200" height="70" rx="5" fill="#0d1117" stroke="#1a2540" stroke-width="1.5"/>
+  <text x="480" y="54" text-anchor="middle" font-family="Rajdhani" font-size="13" font-weight="700" fill="#4a5568" letter-spacing="1">🎙️  VOICE</text>
+  <text x="480" y="71" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3a4a">Whisper base · mic → text</text>
+  <text x="480" y="87" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3a4a">./jarvis (legacy mode)</text>
+
+  <!-- Terminal -->
+  <rect x="700" y="32" width="200" height="70" rx="5" fill="#0d1117" stroke="#1a2540" stroke-width="1.5"/>
+  <text x="800" y="54" text-anchor="middle" font-family="Rajdhani" font-size="13" font-weight="700" fill="#4a5568" letter-spacing="1">⌨️  TERMINAL</text>
+  <text x="800" y="71" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3a4a">./jarvis --text</text>
+  <text x="800" y="87" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3a4a">./jarvis --silent</text>
+
+  <!-- Arrows: inputs → server -->
+  <line x1="160" y1="102" x2="160" y2="134" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+  <line x1="480" y1="102" x2="480" y2="134" stroke="#2a3a4a" stroke-width="1.5" marker-end="url(#arrow-dim)"/>
+  <line x1="800" y1="102" x2="800" y2="134" stroke="#2a3a4a" stroke-width="1.5" marker-end="url(#arrow-dim)"/>
+  <!-- Merge lines -->
+  <path d="M160,134 Q160,148 480,148 Q800,148 800,134" fill="none" stroke="#1a2540" stroke-width="1"/>
+  <line x1="480" y1="148" x2="480" y2="162" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ROW 2 — SERVER                                         -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <text x="480" y="178" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f" letter-spacing="3">SERVER</text>
+
+  <rect x="180" y="188" width="600" height="80" rx="5" fill="#0d1117" stroke="#00d4ff" stroke-width="1.5" filter="url(#glow-cyan)"/>
+  <text x="480" y="212" text-anchor="middle" font-family="Rajdhani" font-size="14" font-weight="700" fill="#00d4ff" letter-spacing="1">⚡  FASTAPI SERVER  —  server.py  :7777</text>
+  <text x="480" y="231" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Auto-starts ollama  ·  SSE word streaming  ·  asyncio.to_thread()  ·  --reload</text>
+  <text x="480" y="250" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Heartbeat watchdog (60s timeout)  ·  beforeunload → POST /shutdown</text>
+
+  <!-- Arrow server → brain -->
+  <line x1="480" y1="268" x2="480" y2="295" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="500" y="285" font-family="Share Tech Mono" font-size="9" fill="#2a4a30">asyncio.to_thread</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ROW 3 — BRAIN                                          -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <text x="480" y="311" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f" letter-spacing="3">BRAIN</text>
+
+  <rect x="205" y="320" width="550" height="80" rx="5" fill="#0d1117" stroke="#00ff88" stroke-width="1.5" filter="url(#glow-green)"/>
+  <text x="480" y="344" text-anchor="middle" font-family="Rajdhani" font-size="14" font-weight="700" fill="#00ff88" letter-spacing="1">🧠  BRAIN  —  brain.py  ·  llama3.2:3b</text>
+  <text x="480" y="363" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Natural language  →  validated JSON  { action, agent, params, reply }</text>
+  <text x="480" y="380" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#4a5568">15-action library  ·  temp 0.2  ·  clarification + best-guess system</text>
+
+  <!-- Arrow brain → orchestrator -->
+  <line x1="480" y1="400" x2="480" y2="425" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="500" y="416" font-family="Share Tech Mono" font-size="9" fill="#2a4a30">validated JSON</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ROW 4 — ORCHESTRATOR                                   -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <text x="480" y="441" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f" letter-spacing="3">ORCHESTRATOR</text>
+
+  <rect x="255" y="450" width="450" height="55" rx="5" fill="#0d1117" stroke="#00ff88" stroke-width="1.5" filter="url(#glow-green)"/>
+  <text x="480" y="474" text-anchor="middle" font-family="Rajdhani" font-size="14" font-weight="700" fill="#00ff88" letter-spacing="1">🔀  ORCHESTRATOR  —  orchestrator.py</text>
+  <text x="480" y="493" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Routes action → agent  ·  Factual actions bypass LLM reply</text>
+
+  <!-- Fan out arrows to agents -->
+  <!-- line from bottom of orchestrator to fan point -->
+  <line x1="480" y1="505" x2="480" y2="528" stroke="#1a2540" stroke-width="1"/>
+  <!-- horizontal fan bar -->
+  <line x1="100" y1="528" x2="860" y2="528" stroke="#1a2540" stroke-width="1"/>
+  <!-- drops to each agent -->
+  <line x1="100"  y1="528" x2="100"  y2="554" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+  <line x1="310"  y1="528" x2="310"  y2="554" stroke="#ff9500" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <line x1="520"  y1="528" x2="520"  y2="554" stroke="#9b59ff" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <line x1="720"  y1="528" x2="720"  y2="554" stroke="#2a3a4a" stroke-width="1" marker-end="url(#arrow-dim)"/>
+  <line x1="860"  y1="528" x2="860"  y2="554" stroke="#2a3a4a" stroke-width="1" marker-end="url(#arrow-dim)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ROW 5 — AGENTS                                         -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <text x="480" y="548" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f" letter-spacing="3">AGENTS</text>
+
+  <!-- Computer Agent -->
+  <rect x="30" y="558" width="140" height="120" rx="5" fill="#0d1117" stroke="#00d4ff" stroke-width="1.5"/>
+  <text x="100" y="578" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#00d4ff">🖥️ COMPUTER</text>
+  <text x="100" y="594" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">get_time</text>
+  <text x="100" y="609" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">search_files</text>
+  <text x="100" y="624" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">web_search</text>
+  <text x="100" y="639" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">open_in_browser</text>
+  <text x="100" y="654" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">run_command</text>
+  <text x="100" y="669" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">clarify / unknown</text>
+
+  <!-- CAD Agent -->
+  <rect x="230" y="558" width="160" height="120" rx="5" fill="#0d1117" stroke="#ff9500" stroke-width="1.5"/>
+  <text x="310" y="578" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#ff9500">🎨 CAD</text>
+  <text x="310" y="594" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">generate_image</text>
+  <text x="310" y="609" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">generate_cad</text>
+  <text x="310" y="624" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">generate_blender</text>
+  <text x="310" y="639" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">generate_shape_e</text>
+  <text x="310" y="654" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">open_bambu</text>
+
+  <!-- Knowledge Agent -->
+  <rect x="450" y="558" width="140" height="120" rx="5" fill="#0d1117" stroke="#9b59ff" stroke-width="1.5"/>
+  <text x="520" y="578" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#9b59ff">📚 KNOWLEDGE</text>
+  <text x="520" y="596" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">answer_question</text>
+  <text x="520" y="614" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#2a3a4a">① capabilities</text>
+  <text x="520" y="629" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#2a3a4a">② LLM knowledge</text>
+  <text x="520" y="644" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#2a3a4a">③ Google fallback</text>
+
+  <!-- Arm Agent (stub) -->
+  <rect x="650" y="558" width="130" height="120" rx="5" fill="#0d1117" stroke="#1a2540" stroke-width="1.5" opacity="0.5"/>
+  <text x="715" y="575" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#2a3a4a">STUB</text>
+  <text x="715" y="592" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#2a3a4a">🦾 ARM</text>
+  <text x="715" y="610" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">move_arm</text>
+  <text x="715" y="628" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">PCA9685 + servos</text>
+  <text x="715" y="646" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">YOLO detection</text>
+  <text x="715" y="664" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">hardware needed</text>
+
+  <!-- Vision Agent (stub) -->
+  <rect x="800" y="558" width="130" height="120" rx="5" fill="#0d1117" stroke="#1a2540" stroke-width="1.5" opacity="0.5"/>
+  <text x="865" y="575" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#2a3a4a">STUB</text>
+  <text x="865" y="592" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#2a3a4a">📷 VISION</text>
+  <text x="865" y="610" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">watch_printer</text>
+  <text x="865" y="628" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">Bambu RTSP feed</text>
+  <text x="865" y="646" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">YOLO fail detect</text>
+  <text x="865" y="664" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">hardware needed</text>
+
+  <!-- Arrows agents → tools -->
+  <line x1="100" y1="678" x2="100" y2="706" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+  <line x1="310" y1="678" x2="310" y2="706" stroke="#ff9500" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <line x1="520" y1="678" x2="520" y2="706" stroke="#9b59ff" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ROW 6 — TOOLS                                          -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <text x="320" y="700" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f" letter-spacing="3">TOOLS</text>
+
+  <!-- time_tool under computer -->
+  <rect x="30" y="710" width="65" height="50" rx="4" fill="#0d1117" stroke="#00d4ff" stroke-width="1"/>
+  <text x="62" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#00d4ff">time_tool</text>
+  <text x="62" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">datetime</text>
+
+  <!-- search_tool under computer -->
+  <rect x="105" y="710" width="65" height="50" rx="4" fill="#0d1117" stroke="#ffd700" stroke-width="1"/>
+  <text x="137" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#ffd700">search_tool</text>
+  <text x="137" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">Google</text>
+
+  <!-- image_gen_tool under cad -->
+  <rect x="182" y="710" width="80" height="50" rx="4" fill="#0d1117" stroke="#ff9500" stroke-width="1"/>
+  <text x="222" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#ff9500">image_gen</text>
+  <text x="222" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">SDXL-Turbo</text>
+
+  <!-- shape_e_tool -->
+  <rect x="270" y="710" width="75" height="50" rx="4" fill="#0d1117" stroke="#ff9500" stroke-width="1"/>
+  <text x="307" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#ff9500">shape_e</text>
+  <text x="307" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">Shap-E AI</text>
+
+  <!-- shape_tool (profile compiler) -->
+  <rect x="353" y="710" width="70" height="50" rx="4" fill="#0d1117" stroke="#ff9500" stroke-width="1"/>
+  <text x="388" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#ff9500">shape_tool</text>
+  <text x="388" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">profile JSON</text>
+
+  <!-- html_preview_tool -->
+  <rect x="431" y="710" width="80" height="50" rx="4" fill="#0d1117" stroke="#ff9500" stroke-width="1"/>
+  <text x="471" y="727" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#ff9500">html_preview</text>
+  <text x="471" y="743" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">Three.js r160</text>
+
+  <!-- blender_tool -->
+  <rect x="519" y="710" width="75" height="50" rx="4" fill="#0d1117" stroke="#ff9500" stroke-width="1"/>
+  <text x="556" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#ff9500">blender_tool</text>
+  <text x="556" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">bpy script</text>
+
+  <!-- llm_tool under knowledge -->
+  <rect x="602" y="710" width="65" height="50" rx="4" fill="#0d1117" stroke="#00ff88" stroke-width="1"/>
+  <text x="634" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#00ff88">llm_tool</text>
+  <text x="634" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">Ollama API</text>
+
+  <!-- tts_tool -->
+  <rect x="675" y="710" width="65" height="50" rx="4" fill="#0d1117" stroke="#00d4ff" stroke-width="1"/>
+  <text x="707" y="729" text-anchor="middle" font-family="Rajdhani" font-size="10" font-weight="700" fill="#00d4ff">tts_tool</text>
+  <text x="707" y="745" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#4a5568">macOS say</text>
+
+  <!-- Arrows tools → external -->
+  <line x1="62"  y1="760" x2="62"  y2="798" stroke="#1a2540" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="137" y1="760" x2="137" y2="798" stroke="#1a2540" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="222" y1="760" x2="222" y2="798" stroke="#1a2540" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="307" y1="760" x2="307" y2="798" stroke="#1a2540" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="471" y1="760" x2="471" y2="798" stroke="#1a2540" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="556" y1="760" x2="556" y2="798" stroke="#1a2540" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="634" y1="760" x2="634" y2="798" stroke="#1a2540" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ROW 7 — EXTERNAL SYSTEMS                               -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <text x="400" y="793" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f" letter-spacing="3">EXTERNAL SYSTEMS</text>
+
+  <!-- Ollama -->
+  <rect x="20" y="800" width="120" height="65" rx="5" fill="#0d1117" stroke="#00ff88" stroke-width="1.5"/>
+  <text x="80" y="821" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#00ff88">🦙 OLLAMA</text>
+  <text x="80" y="838" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">llama3.2:3b  ~2GB</text>
+  <text x="80" y="853" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">llama3.1:8b  ~5GB</text>
+
+  <!-- Google -->
+  <rect x="155" y="800" width="120" height="65" rx="5" fill="#0d1117" stroke="#ffd700" stroke-width="1.5"/>
+  <text x="215" y="821" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#ffd700">🔍 GOOGLE</text>
+  <text x="215" y="838" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">googlesearch-python</text>
+  <text x="215" y="853" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">no API key  ⚠ internet</text>
+
+  <!-- SDXL-Turbo -->
+  <rect x="290" y="800" width="120" height="65" rx="5" fill="#0d1117" stroke="#ff9500" stroke-width="1.5"/>
+  <text x="350" y="821" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#ff9500">🎨 SDXL-TURBO</text>
+  <text x="350" y="838" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">MPS (Mac GPU)</text>
+  <text x="350" y="853" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">~7GB cached  4 steps</text>
+
+  <!-- Shap-E -->
+  <rect x="425" y="800" width="120" height="65" rx="5" fill="#0d1117" stroke="#ff9500" stroke-width="1.5"/>
+  <text x="485" y="821" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#ff9500">🧊 SHAP-E</text>
+  <text x="485" y="838" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">CPU · ~3.8GB cached</text>
+  <text x="485" y="853" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">128 steps · ~6 min</text>
+
+  <!-- Blender -->
+  <rect x="560" y="800" width="120" height="65" rx="5" fill="#0d1117" stroke="#00d4ff" stroke-width="1.5"/>
+  <text x="620" y="821" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#00d4ff">🔷 BLENDER</text>
+  <text x="620" y="838" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">Steam  ·  bpy script</text>
+  <text x="620" y="853" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">--python flag</text>
+
+  <!-- macOS say -->
+  <rect x="695" y="800" width="120" height="65" rx="5" fill="#0d1117" stroke="#00d4ff" stroke-width="1.5"/>
+  <text x="755" y="821" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#00d4ff">🔊 MACOS SAY</text>
+  <text x="755" y="838" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">Voice: Samantha</text>
+  <text x="755" y="853" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#4a5568">Rate: 200 wpm</text>
+
+  <!-- Bambu (stub) -->
+  <rect x="830" y="800" width="100" height="65" rx="5" fill="#0d1117" stroke="#1a2540" stroke-width="1.5" opacity="0.45"/>
+  <text x="880" y="818" text-anchor="middle" font-family="Share Tech Mono" font-size="8" fill="#2a3a4a">STUB</text>
+  <text x="880" y="834" text-anchor="middle" font-family="Rajdhani" font-size="12" font-weight="700" fill="#2a3a4a">🐼 BAMBU</text>
+  <text x="880" y="851" text-anchor="middle" font-family="Share Tech Mono" font-size="9" fill="#1a2a3a">open STL</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LEGEND                                                 -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <line x1="30" y1="898" x2="30" y2="918" stroke="#1a2540" stroke-width="1.5"/>
+  <rect x="30" y="918" width="8" height="8" rx="1" fill="#00d4ff"/>
+  <text x="44" y="927" font-family="Share Tech Mono" font-size="10" fill="#4a5568">UI / Server</text>
+
+  <rect x="130" y="918" width="8" height="8" rx="1" fill="#00ff88"/>
+  <text x="144" y="927" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Brain / LLM</text>
+
+  <rect x="240" y="918" width="8" height="8" rx="1" fill="#ff9500"/>
+  <text x="254" y="927" font-family="Share Tech Mono" font-size="10" fill="#4a5568">3D / Image Generation</text>
+
+  <rect x="420" y="918" width="8" height="8" rx="1" fill="#9b59ff"/>
+  <text x="434" y="927" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Knowledge</text>
+
+  <rect x="520" y="918" width="8" height="8" rx="1" fill="#ffd700"/>
+  <text x="534" y="927" font-family="Share Tech Mono" font-size="10" fill="#4a5568">Search</text>
+
+  <rect x="600" y="918" width="8" height="8" rx="1" fill="#1a2540"/>
+  <text x="614" y="927" font-family="Share Tech Mono" font-size="10" fill="#2a3a4a">Stub (not built yet)</text>
+
+  <!-- total -->
+  <text x="480" y="968" text-anchor="middle" font-family="Share Tech Mono" font-size="10" fill="#2a3f5f">ALL LOCAL · NO CLOUD · NO API KEYS (except Google Search)  ·  ~18 GB ON DISK  ·  Mac M5 Pro</text>
+
+</svg>
+
+</body>
+</html>

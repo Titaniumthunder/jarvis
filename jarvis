@@ -1,0 +1,12 @@
+#!/bin/bash
+# jarvis — easy launcher script
+# Usage:
+#   ./jarvis          → voice mode (mic + Whisper)
+#   ./jarvis --text   → text mode (type commands)
+#   ./jarvis --silent → text mode, no spoken replies
+
+# Move to the jarvis folder no matter where you run this from
+cd "$(dirname "$0")"
+
+# Run main.py using the project's virtual environment
+.venv/bin/python main.py "$@"
