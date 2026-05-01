@@ -24,4 +24,4 @@ archive/
 # Runtime artifacts
 _last_blender_session.json
 code_output/
-previews/
+previews/MUJOCO_LOG.TXT
