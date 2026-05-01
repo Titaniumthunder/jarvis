@@ -1,0 +1,14 @@
+# Install these in the SEPARATE ~/mujoco-venv (Python 3.10), NOT the main Jarvis venv.
+# MuJoCo wheels do not exist for Python 3.14, which is what jarvis/.venv uses.
+#
+# Setup:
+#   python3.10 -m venv ~/mujoco-venv
+#   ~/mujoco-venv/bin/pip install -r requirements-mujoco.txt
+#
+# Launch the arm sim server with:
+#   ~/mujoco-venv/bin/mjpython tools/arm_sim_server.py
+#
+# (Or just run the move_arm action — the client auto-launches it.)
+
+mujoco>=3.0
+numpy>=1.24

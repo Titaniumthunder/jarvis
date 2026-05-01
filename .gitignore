@@ -18,3 +18,10 @@ sd_model_cache/
 shape_e_output/
 image_gen_output/
 *.obj
+blender_scripts/*.py
+archive/
+
+# Runtime artifacts
+_last_blender_session.json
+code_output/
+previews/

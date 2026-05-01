@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 # main.py
 # Entry point for Jarvis — ties together listening, thinking, and acting.
 #

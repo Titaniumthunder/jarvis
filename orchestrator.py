@@ -21,7 +21,6 @@ ACTION_ROUTER = {
     "generate_shape_e": lambda params: cad_agent.run({**params, "task": "generate_shape_e"}),
     "open_bambu":       lambda params: cad_agent.run({"task": "open_bambu", **params}),
     "answer_question": lambda params: knowledge_agent.run(params),
-    "get_info":        lambda params: knowledge_agent.run(params),  # alias
     "watch_printer":  lambda params: vision_agent.run(params),
     "write_code":          lambda params: code_agent.run({**params, "task": "write_code"}),
     "edit_file":           lambda params: code_agent.run({**params, "task": "edit_file"}),

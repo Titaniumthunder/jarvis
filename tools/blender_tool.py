@@ -10,11 +10,13 @@
 import subprocess
 import pathlib
 
-# Path to Blender executable on this Mac
-BLENDER_PATH = "/Users/alexsalamati/Library/Application Support/Steam/steamapps/common/Blender/Blender.app/Contents/MacOS/Blender"
+from tools import paths
+
+# Path to Blender executable (override with JARVIS_BLENDER_PATH env var)
+BLENDER_PATH = paths.BLENDER_PATH
 
 # Where to save generated scripts
-SCRIPTS_DIR = pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "blender_scripts"
+SCRIPTS_DIR = paths.BLENDER_SCRIPTS
 
 
 def run_script(script_code: str, model_name: str) -> str:

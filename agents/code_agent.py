@@ -7,16 +7,10 @@
 #   explain_code → read a file and explain what it does in plain English
 
 import pathlib
-from tools import llm_tool, file_tool
+from tools import llm_tool, file_tool, paths
 
 # Where generated code files are saved
-CODE_OUTPUT_DIR = (
-    pathlib.Path.home()
-    / "Personal Project"
-    / "Desktop assistant"
-    / "jarvis"
-    / "code_output"
-)
+CODE_OUTPUT_DIR = paths.CODE_OUTPUT
 
 CODE_SYSTEM = """You are an expert software engineer.
 Rules:

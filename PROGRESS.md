@@ -2,6 +2,52 @@
 
 ---
 
+## Local-First, Cloud-Augmented Stack
+
+Jarvis runs locally on a Mac M5 Pro and stores all your data on disk. For
+inference speed it uses two cloud APIs by default, but every cloud call has a
+local fallback so the assistant keeps working with no internet and no API keys.
+
+**Local components** (run on your machine, no network calls):
+- **Ollama + Gemma4** — brain reasoning, agent calls, search summarisation. Offline fallback for every cloud LLM call.
+- **Whisper (base)** — voice transcription
+- **SDXL-Turbo** — text → image (MPS, ~2 s)
+- **TripoSR** — image → 3D mesh (CPU, ~15 s)
+- **Obsidian vault** — long-term memory at `~/Documents/Jarvis Memory/`
+- **Blender + MCP socket** — local 3D modelling, no cloud calls
+- **macOS `say`** — text-to-speech
+
+**Cloud components** (optional, behind API keys):
+- **Groq (Llama 3.3 70B)** — primary fast LLM in `brain.py`, `llm_tool.py`, and `diagram_agent.py`. Used for low-latency replies. Falls back to Ollama+Gemma4 if `GROQ_API_KEY` is unset or the call fails.
+- **Brave Search API** — used by `search_tool.py` for web search + AI summary. Required for the `web_search` action; with no key, web search is disabled but every other action still works.
+- **Gemini 2.0 Flash** — legacy `gemini_tool.py`, kept as an alternate LLM backend. Not on the default code path.
+
+---
+
+## Privacy & Offline Mode
+
+With **all three API keys left blank** in `.env`, Jarvis is fully offline:
+- The brain runs on Ollama+Gemma4 (slower but private).
+- All agent calls fall back to Ollama+Gemma4.
+- Voice, image-gen, 3D-gen, Blender, memory, and code agents already run locally — they don't change.
+- Only the `web_search` action stops working (Brave is required for that).
+
+The cloud calls are a **speed optimization, not a requirement.** If you want
+zero network egress, leave the keys empty and Jarvis will still answer
+questions, generate images, build 3D models, write code, and remember things
+— all from your local machine.
+
+---
+
+## Phase 11 — Cleanup pass ✅ COMPLETE (April 2026)
+- **Security:** three hardcoded API keys (Gemini, Brave, Groq) moved to `os.environ`; `.webui_secret_key` deleted; `.env.example` documents the keys and is the only template that ships.
+- **Path portability:** new `tools/paths.py` is the single source of truth; every hardcoded `/Users/alexsalamati/...` path was removed from tools, agents, and the brain's system prompt. External binaries (`Blender`, `claude` CLI) read from `JARVIS_BLENDER_PATH` / `JARVIS_CLAUDE_CLI` with Mac defaults.
+- **Dead code:** removed duplicate `file_tools.py` / `terminal_tools.py`, placeholder `openscad_tool.py` / `bambu_tool.py`, and the `get_info` action alias; experimental scripts moved to `archive/`.
+- **MuJoCo arm:** `move_arm` is no longer a stub — `tools/arm_sim_server.py` runs the Franka Panda in `~/mujoco-venv` via `mjpython`, `tools/arm_sim_client.py` auto-launches it from the main venv, and `agents/arm_agent.py` implements `pick_up` / `place` / `point_at` / `home`.
+- **Onboarding:** `README.md`, `requirements.txt`, `requirements-mujoco.txt`, and `docs/ARM_SETUP.md` added; `python-dotenv` auto-loads `.env` in `server.py` and `main.py`.
+
+---
+
 ## Phase 3 — Core Brain & Voice ✅ COMPLETE
 - `brain.py` — Ollama + Gemma4, structured JSON, validates against action library
 - `listen.py` — Whisper base model, mic recording + transcription
@@ -105,32 +151,32 @@ cd "/Users/alexsalamati/Personal Project/Desktop assistant/jarvis"
 
 ---
 
-## Full action library (26 actions)
+## Full action library (24 actions)
 
 | Action | Agent | Status |
 |---|---|---|
 | `get_time` | computer | ✅ |
 | `search_files` | computer | ✅ |
-| `web_search` | computer | ✅ DuckDuckGo news + web |
+| `web_search` | computer | ✅ Brave Search + Ollama summary |
 | `open_in_browser` | computer | ✅ |
 | `run_command` | computer | ✅ |
 | `generate_image` | cad | ✅ SDXL-Turbo, click to expand |
 | `generate_cad` | cad | ✅ Three.js preview |
 | `generate_shape_e` | cad | ✅ TripoSR pipeline |
-| `open_bambu` | cad | ⬜ Stub |
+| `open_bambu` | cad | ⬜ STUB |
 | `generate_blender_mcp` | blender_mcp | ✅ Gemma4, image-guided |
 | `refine_blender_mcp` | blender_mcp | ✅ Session memory |
 | `generate_blender_cc` | blender_cc | ✅ Claude Code sub-agent (default) |
 | `refine_blender_cc` | blender_cc | ✅ Claude Code refinement |
 | `answer_question` | knowledge | ✅ LLM + web fallback |
-| `get_info` | knowledge | ✅ Alias |
 | `write_code` | code | ✅ Inline display with Copy |
 | `edit_file` | code | ✅ Inline display with Copy |
 | `explain_code` | code | ✅ |
 | `remember` | memory | ✅ Obsidian vault |
 | `recall` | memory | ✅ Natural language answer |
-| `watch_printer` | vision | ⬜ Hardware needed |
-| `move_arm` | arm | ⬜ Hardware needed |
+| `generate_diagram` | diagram | ✅ Mermaid.js (flowcharts, logic gates) |
+| `watch_printer` | vision | ⬜ STUB (hardware needed) |
+| `move_arm` | arm | ✅ Simulated Franka Panda (MuJoCo) |
 | `clarify` | none | ✅ |
 | `unknown` | none | ✅ |
 

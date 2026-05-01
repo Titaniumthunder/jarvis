@@ -7,14 +7,10 @@
 
 import json
 import pathlib
-from tools import blender_mcp_tool, llm_tool, image_gen_tool
+from tools import blender_mcp_tool, llm_tool, image_gen_tool, paths
 
 # Saves the last session so refinements have full context
-SESSION_FILE = (
-    pathlib.Path.home()
-    / "Personal Project" / "Desktop assistant" / "jarvis"
-    / "blender_scripts" / "_last_session.json"
-)
+SESSION_FILE = paths.BLENDER_SCRIPTS / "_last_session.json"
 
 MAX_RETRIES = 2
 

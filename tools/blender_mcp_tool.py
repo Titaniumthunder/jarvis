@@ -12,14 +12,16 @@ import time
 import subprocess
 import pathlib
 
+from tools import paths
+
 HOST    = "localhost"
 PORT    = 9876
 TIMEOUT = 30  # seconds per command
 
-BLENDER_PATH = "/Users/alexsalamati/Library/Application Support/Steam/steamapps/common/Blender/Blender.app/Contents/MacOS/Blender"
+BLENDER_PATH = paths.BLENDER_PATH
 
 # Startup script written to a temp file and passed to Blender via --python
-_STARTUP_SCRIPT = pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "blender_scripts" / "_mcp_autoconnect.py"
+_STARTUP_SCRIPT = paths.BLENDER_SCRIPTS / "_mcp_autoconnect.py"
 
 
 def _send(code: str) -> dict:

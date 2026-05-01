@@ -30,7 +30,6 @@ KNOWN_ACTIONS = {
     "generate_shape_e",  # generate organic 3D mesh with TripoSR AI → open in Blender
     "open_bambu",        # open a file in Bambu Studio
     "answer_question",   # answer from local knowledge
-    "get_info",          # alias for answer_question (brain sometimes uses this)
     "watch_printer",     # check the printer camera
     "write_code",        # write new code to a file
     "edit_file",         # edit an existing file
@@ -120,7 +119,7 @@ Example — user says "open latest iPhone reviews in browser" or "open in Chrome
 {"action": "open_in_browser", "agent": "computer", "params": {"query": "latest iPhone reviews", "browser": "chrome"}, "reply": "Opening that in Chrome now."}
 
 Example — user says "What's in my Personal Project folder?":
-{"action": "search_files", "agent": "computer", "params": {"query": "*", "directory": "/Users/alexsalamati/Personal Project"}, "reply": "Looking inside your Personal Project folder."}
+{"action": "search_files", "agent": "computer", "params": {"query": "*", "directory": "~/Personal Project"}, "reply": "Looking inside your Personal Project folder."}
 
 Example — user says "Pick up the red block":
 {"action": "move_arm", "agent": "arm", "params": {"target_object": "red block", "motion": "pick_up"}, "reply": "On it, reaching for the red block."}
@@ -156,7 +155,7 @@ Example — user says "edit /path/to/file.py to add error handling":
 {"action": "edit_file", "agent": "code", "params": {"filepath": "/path/to/file.py", "instruction": "add error handling"}, "reply": "Editing that file for you now."}
 
 Example — user says "explain what brain.py does" or "what does this file do":
-{"action": "explain_code", "agent": "code", "params": {"filepath": "/Users/alexsalamati/Personal Project/Desktop assistant/jarvis/brain.py"}, "reply": "Let me read through that file and explain it."}
+{"action": "explain_code", "agent": "code", "params": {"filepath": "./brain.py"}, "reply": "Let me read through that file and explain it."}
 
 Example — user says "remember that my printer is a Bambu X1C":
 {"action": "remember", "agent": "memory", "params": {"content": "printer is a Bambu X1C", "category": "preference"}, "reply": "Got it, I'll remember that."}

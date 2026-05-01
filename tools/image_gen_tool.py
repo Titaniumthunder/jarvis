@@ -7,16 +7,17 @@
 # The images are used as input for the image-to-3D pipeline (Shap-E image300M).
 # A white background + full body view prompt gives the best 3D conversion results.
 
-import pathlib
 import torch
 import warnings
 warnings.filterwarnings("ignore")
 
+from tools import paths
+
 # Where to save generated images
-OUTPUT_DIR = pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "image_gen_output"
+OUTPUT_DIR = paths.IMAGE_GEN_OUTPUT
 
 # Fixed cache dir — prevents re-downloading when launched from different folders
-CACHE_DIR = str(pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "sd_model_cache")
+CACHE_DIR = str(paths.SD_MODEL_CACHE)
 
 # MPS + float32 (no fp16 variant).
 # MPS + fp16 produces solid black images on torch 2.11+ (precision bug in VAE).

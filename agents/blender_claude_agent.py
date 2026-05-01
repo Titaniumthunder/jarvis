@@ -11,10 +11,10 @@ import json
 import pathlib
 import datetime
 import re
-from tools import blender_mcp_tool, groq_tool
+from tools import blender_mcp_tool, groq_tool, paths
 
-CLAUDE_BIN = "/usr/local/bin/claude"
-SESSION_FILE = pathlib.Path(__file__).parent.parent / "_last_blender_session.json"
+CLAUDE_BIN = paths.CLAUDE_CLI
+SESSION_FILE = paths.JARVIS_ROOT / "_last_blender_session.json"
 MAX_RETRIES = 3
 
 BLENDER_SYSTEM_PROMPT = """You are an expert Blender Python (bpy) programmer.

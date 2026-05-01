@@ -11,21 +11,22 @@
 #
 # Model: stabilityai/TripoSR
 
-import pathlib
 import sys
 import torch
 import warnings
 warnings.filterwarnings("ignore")
 
+from tools import paths
+
 # Add the cloned TripoSR source directory to path so `from tsr.system import TSR` works.
 # The VAST-AI-Research/TripoSR repo is not a pip-installable package — it ships a raw
 # `tsr/` folder that must be on sys.path directly.
-_TRIPOSR_SRC = pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "triposr_src"
+_TRIPOSR_SRC = paths.TRIPOSR_SRC
 if str(_TRIPOSR_SRC) not in sys.path:
     sys.path.insert(0, str(_TRIPOSR_SRC))
 
-OUTPUT_DIR = pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "shape_e_output"
-CACHE_DIR  = str(pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "triposr_cache")
+OUTPUT_DIR = paths.SHAPE_E_OUTPUT
+CACHE_DIR  = str(paths.TRIPOSR_CACHE)
 
 # Run on CPU — MPS has precision issues with some TripoSR ops
 DEVICE = "cpu"

@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 # server.py
 # FastAPI backend for the Jarvis browser UI.
 #
