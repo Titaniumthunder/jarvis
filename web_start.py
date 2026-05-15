@@ -53,23 +53,30 @@ def main():
     print(f"[jarvis-web] Press Ctrl+C to stop everything.\n")
 
     # ── Start uvicorn ─────────────────────────────────────────────────────────
-    # --reload makes uvicorn auto-restart when source .py files change (dev-friendly).
-    # --reload-exclude prevents Blender output scripts and generated files from
-    # triggering false restarts (blender_scripts/*.py are outputs, not source code).
-    server_proc = subprocess.Popen(
-        [venv_python, "-m", "uvicorn", "server:app",
-         "--host", "0.0.0.0",
-         "--port", str(PORT),
-         "--log-level", "warning",
-         "--reload",
-         "--timeout-keep-alive", "300",
-         "--reload-exclude", "blender_scripts/*",
-         "--reload-exclude", "image_gen_output/*",
-         "--reload-exclude", "shape_e_output/*",
-         "--reload-exclude", "previews/*",
-         "--reload-exclude", "static/*"],
-        cwd=JARVIS_DIR,
-    )
+    # --reload auto-restarts the server on .py changes (dev-friendly), but it
+    # also kills the Blender MCP socket and forces SDXL-Turbo to reload on every
+    # save. Off by default; set JARVIS_DEV=1 to opt in.
+    dev_mode = os.environ.get("JARVIS_DEV") == "1"
+
+    uvicorn_args = [
+        venv_python, "-m", "uvicorn", "server:app",
+        "--host", "0.0.0.0",
+        "--port", str(PORT),
+        "--log-level", "warning",
+        "--timeout-keep-alive", "300",
+    ]
+    if dev_mode:
+        uvicorn_args += [
+            "--reload",
+            "--reload-exclude", "blender_scripts/*",
+            "--reload-exclude", "image_gen_output/*",
+            "--reload-exclude", "shape_e_output/*",
+            "--reload-exclude", "previews/*",
+            "--reload-exclude", "static/*",
+        ]
+        print("[jarvis-web] DEV MODE — auto-reload enabled")
+
+    server_proc = subprocess.Popen(uvicorn_args, cwd=JARVIS_DIR)
 
     # ── Wait for server to be ready ───────────────────────────────────────────
     if not wait_for_server(PORT):
