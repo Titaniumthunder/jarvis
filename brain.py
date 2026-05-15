@@ -1,15 +1,16 @@
 # brain.py
-# The LLM "brain" for Jarvis — sends user commands to Gemini and gets back
-# structured JSON telling the orchestrator what to do.
+# The LLM "brain" for Jarvis — sends user commands to Groq (Llama 3.3 70B),
+# with Ollama (Gemma4) as the local fallback, and gets back structured JSON
+# telling the orchestrator what to do.
 #
 # How it works:
-#   1. We send the user's message + a system prompt to Gemini 2.0 Flash
-#   2. Gemini returns a JSON object like:
+#   1. We send the user's message + a system prompt to Groq.
+#   2. Groq returns a JSON object like:
 #      { "action": "get_time", "agent": "computer", "params": {} }
-#   3. We validate the JSON against the known action library
-#   4. Return the validated dict to the orchestrator
+#   3. We validate the JSON against the known action library.
+#   4. Return the validated dict to the orchestrator.
 #
-# Falls back to local Ollama (Gemma4) if Gemini is unavailable.
+# Falls back to local Ollama (Gemma4) if Groq is unavailable.
 
 import json
 import requests
@@ -25,6 +26,7 @@ KNOWN_ACTIONS = {
     "open_in_browser",   # open a search or URL in Chrome
     "run_command",       # run a terminal command
     "move_arm",          # move the robot arm
+    "reset_blocks",      # re-spawn arm-demo blocks at new random positions
     "generate_image",    # generate a 2D image with Stable Diffusion and show it
     "generate_cad",      # generate Three.js HTML preview in browser
     "generate_shape_e",  # generate organic 3D mesh with TripoSR AI → open in Blender
@@ -69,7 +71,8 @@ Available actions:
      - "what's in X folder" or "show X folder" → query: "*", directory: full path to that folder
      - "find X files" → query: "*.py" or filename pattern, directory: best guess or home
   run_command    → agent: computer,   params: {"cmd": "..."}
-  move_arm       → agent: arm,        params: {"target_object": "...", "motion": "..."}
+  move_arm       → agent: arm,        params: {}
+  reset_blocks   → agent: arm,        params: {}
   generate_image   → agent: cad, params: {"description": "...", "filename": "..."}
   generate_cad     → agent: cad, params: {"description": "...", "filename": "..."}
   generate_shape_e → agent: cad, params: {"description": "...", "filename": "..."}
@@ -121,8 +124,12 @@ Example — user says "open latest iPhone reviews in browser" or "open in Chrome
 Example — user says "What's in my Personal Project folder?":
 {"action": "search_files", "agent": "computer", "params": {"query": "*", "directory": "~/Personal Project"}, "reply": "Looking inside your Personal Project folder."}
 
-Example — user says "Pick up the red block":
-{"action": "move_arm", "agent": "arm", "params": {"target_object": "red block", "motion": "pick_up"}, "reply": "On it, reaching for the red block."}
+Example — user says "Stack the blocks" or "build the tower" or "demo the arm" or "pick up the blocks":
+Any arm-related request maps to move_arm with empty params — the agent runs a fixed 3-block stacking demo.
+{"action": "move_arm", "agent": "arm", "params": {}, "reply": "Stacking the blocks now."}
+
+Example — user says "reset" or "shuffle the blocks" or "new positions" or "start over" or "reset the demo":
+{"action": "reset_blocks", "agent": "arm", "params": {}, "reply": "Resetting the blocks now."}
 
 Example — user says "Generate an image of a dragon" or "Draw me a sunset":
 {"action": "generate_image", "agent": "cad", "params": {"description": "a dragon", "filename": "dragon"}, "reply": "Generating that image now, give me a moment."}
@@ -185,8 +192,8 @@ Example — user says "make the teeth wider" or "refine it" or "fix it" or "add 
 
 def ask(user_message: str) -> dict:
     """
-    Send a message to Gemini and return the validated JSON response as a dict.
-    Falls back to Ollama if Gemini is unavailable.
+    Send a message to Groq (Llama 3.3 70B), with Ollama fallback, and return the
+    validated JSON response as a dict.
 
     Args:
         user_message: The transcribed (or typed) command from the user.
@@ -222,7 +229,7 @@ def ask(user_message: str) -> dict:
         return _parse_and_validate(raw_text, user_message)
     except requests.exceptions.ConnectionError:
         print("[brain] ERROR: Ollama also not running.")
-        return _fallback("Neither Gemini nor Ollama is available.")
+        return _fallback("Neither Groq nor Ollama is available.")
     except Exception as e:
         print(f"[brain] Ollama fallback error: {e}")
         return _fallback(str(e))

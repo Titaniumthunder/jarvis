@@ -1,0 +1,39 @@
+<!--
+  Jarvis arm scene — wraps the upstream Franka Panda scene and lays out the
+  3-block stacking demo: red, blue, and green cubes plus a green floor
+  marker showing where the tower gets built.
+
+  This file is loaded by tools/arm_sim_server.py, which writes a populated
+  copy *into the franka_emika_panda directory* before passing it to MuJoCo.
+  That placement is required: MuJoCo resolves <compiler meshdir="assets"/>
+  (declared inside panda.xml) and other relative paths against the top-level
+  XML file's directory. Loading from /tmp/ breaks mesh resolution.
+
+  Each block has a <freejoint/> and 50 g mass so the magnetic grasp can
+  pick it up. The block <pos> values here are placeholders — the server
+  overrides them with random reachable positions at startup. The green
+  marker is a flat static tile with no collision — just a visual target
+  for the stack location.
+-->
+<mujoco model="jarvis_arm_scene">
+  <include file="scene.xml"/>
+
+  <worldbody>
+    <body name="red_block" pos="0.4 -0.15 0.025">
+      <freejoint/>
+      <geom type="box" size="0.025 0.025 0.025" rgba="1 0 0 1" mass="0.05"/>
+    </body>
+    <body name="blue_block" pos="0.4 -0.05 0.025">
+      <freejoint/>
+      <geom type="box" size="0.025 0.025 0.025" rgba="0 0 1 1" mass="0.05"/>
+    </body>
+    <body name="green_block" pos="0.4 0.05 0.025">
+      <freejoint/>
+      <geom type="box" size="0.025 0.025 0.025" rgba="0 1 0 1" mass="0.05"/>
+    </body>
+    <body name="target_zone" pos="0.4 0.15 0.025">
+      <geom type="box" size="0.04 0.04 0.001" rgba="0 1 0 0.4"
+            contype="0" conaffinity="0"/>
+    </body>
+  </worldbody>
+</mujoco>

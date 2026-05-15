@@ -110,3 +110,11 @@ def close_gripper() -> dict:
 
 def move_to(xyz) -> dict:
     return _send({"cmd": "move_to", "xyz": list(xyz)})
+
+
+def get_cube_pos(name: str = "red_block") -> dict:
+    return _send({"cmd": "get_cube_pos", "name": name})
+
+
+def reset_cubes() -> dict:
+    return _send({"cmd": "reset_cubes"})

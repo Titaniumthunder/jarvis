@@ -12,6 +12,7 @@ from tools import time_tool
 ACTION_ROUTER = {
     "get_time":       lambda params: time_tool.get_current_time(),
     "move_arm":       lambda params: arm_agent.run(params),
+    "reset_blocks":   lambda params: arm_agent.reset(params),
     "search_files":    lambda params: computer_agent.run({"task": "search_files", **params}),
     "web_search":      lambda params: computer_agent.run({"task": "web_search", **params}),
     "open_in_browser": lambda params: computer_agent.run({"task": "open_in_browser", **params}),

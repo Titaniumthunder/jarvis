@@ -1,90 +1,93 @@
 # arm_agent.py
 # Drives the simulated Franka Panda arm via tools.arm_sim_client.
-#
-# YOLO + camera input is not wired up yet, so target_object → world coords
-# uses a hardcoded lookup table for now. When perception lands, replace
-# TARGETS with a vision-based resolver and the rest of this file stays the same.
+# Demo behavior: pick up red, blue, then green blocks (in that order) from
+# their random spawn positions and stack them on the target zone.
 
+import time
 from tools import arm_sim_client
 
-# Workspace coordinates (Franka base frame, metres).
-TARGETS = {
-    "red block":   [0.5,  0.0, 0.1],
-    "blue block":  [0.5,  0.2, 0.1],
-    "green block": [0.5, -0.2, 0.1],
-    "home":        [0.3,  0.0, 0.5],
-}
+# Stack location (where blocks are placed in order: bottom -> top).
+STACK_XY = [0.4, 0.15]
 
-APPROACH_HEIGHT = 0.15  # metres above the target for the pre-grasp pose
+# TCP Z when releasing each level. Held cube floats 10cm below TCP, so:
+#   TCP=0.130 -> cube center at 0.030 (bottom block on floor, ~5mm clearance)
+#   TCP=0.180 -> cube center at 0.080 (middle block on top of bottom)
+#   TCP=0.230 -> cube center at 0.130 (top block on top of middle)
+STACK_TCP_Z = [0.130, 0.180, 0.230]
+
+# High lift clearance — must be above the top of the finished stack (z=0.15)
+LIFT_Z = 0.40
+
+# TCP target for grasping a block sitting on the floor:
+#   TCP = block_z + this offset.
+GRASP_Z_OFFSET = 0.105
+
+# Stacking order: bottom to top.
+BLOCKS = ["red_block", "blue_block", "green_block"]
 
 
 def run(command: dict) -> str:
-    target_name = command.get("target_object", "").strip().lower()
-    motion = command.get("motion", "").strip().lower()
-
     if not arm_sim_client.ensure_running():
         return "Could not start the arm simulator. See docs/ARM_SETUP.md."
 
-    if target_name not in TARGETS:
-        known = ", ".join(sorted(TARGETS))
-        return f"I don't know where '{target_name}' is. Known targets: {known}."
+    # Initialize once at start
+    print("[arm_agent] === Initialize ===")
+    arm_sim_client.home()
+    time.sleep(0.8)
+    arm_sim_client.open_gripper()
+    time.sleep(0.8)
 
-    target = TARGETS[target_name]
+    for i, block_name in enumerate(BLOCKS):
+        print(f"\n[arm_agent] === Block {i + 1}/3: {block_name} ===")
+        err = _pick_and_place(block_name, i)
+        if err:
+            return err
 
-    if motion == "pick_up":
-        return _pick_up(target_name, target)
-    if motion == "place":
-        return _place(target_name, target)
-    if motion == "point_at":
-        return _point_at(target_name, target)
-    if motion in ("home", ""):
-        result = arm_sim_client.home()
-        return _format(f"Moved arm to home pose.", result)
-
-    return f"Unknown motion '{motion}'. Try pick_up, place, point_at, or home."
+    arm_sim_client.home()
+    return "All three blocks stacked on the target."
 
 
-# ─── Motions ──────────────────────────────────────────────────────────────────
+def reset(command: dict) -> str:
+    """Re-spawn blocks at new random positions and return arm to home."""
+    if not arm_sim_client.ensure_running():
+        return "Could not start the arm simulator."
+    arm_sim_client.home()
+    time.sleep(0.5)
+    arm_sim_client.open_gripper()
+    result = arm_sim_client.reset_cubes()
+    if result.get("status") != "success":
+        return f"Reset failed: {result}"
+    return "Blocks reset to new random positions. Ready for the next demo."
 
-def _pick_up(name: str, target) -> str:
-    above = [target[0], target[1], target[2] + APPROACH_HEIGHT]
-    steps = [
-        ("open gripper", lambda: arm_sim_client.open_gripper()),
-        (f"approach above {name}", lambda: arm_sim_client.move_to(above)),
-        (f"descend onto {name}", lambda: arm_sim_client.move_to(target)),
-        ("close gripper", lambda: arm_sim_client.close_gripper()),
-        (f"lift {name}", lambda: arm_sim_client.move_to(above)),
+
+def _pick_and_place(block_name: str, stack_idx: int) -> str | None:
+    # Find this block's current position
+    pos_result = arm_sim_client.get_cube_pos(block_name)
+    if pos_result.get("status") != "success":
+        return f"Could not locate {block_name}: {pos_result}"
+    bx, by, bz = pos_result["pos"]
+    print(f"[arm_agent] {block_name} at ({bx:+.3f}, {by:+.3f}, {bz:+.3f})")
+
+    grasp_z = bz + GRASP_Z_OFFSET
+    release_z = STACK_TCP_Z[stack_idx]
+
+    # Each step: (label, callable, args)
+    moves = [
+        ("approach",            arm_sim_client.move_to, ([bx, by, LIFT_Z],)),
+        ("descend to grasp",    arm_sim_client.move_to, ([bx, by, grasp_z],)),
+        ("close gripper",       arm_sim_client.close_gripper, ()),
+        ("lift",                arm_sim_client.move_to, ([bx, by, LIFT_Z],)),
+        ("travel to stack",     arm_sim_client.move_to, ([STACK_XY[0], STACK_XY[1], LIFT_Z],)),
+        (f"descend to level {stack_idx + 1}",
+                                arm_sim_client.move_to, ([STACK_XY[0], STACK_XY[1], release_z],)),
+        ("release",             arm_sim_client.open_gripper, ()),
+        ("retreat",             arm_sim_client.move_to, ([STACK_XY[0], STACK_XY[1], LIFT_Z],)),
     ]
-    return _run_sequence(f"Picked up {name}.", steps)
 
-
-def _place(name: str, target) -> str:
-    above = [target[0], target[1], target[2] + APPROACH_HEIGHT]
-    steps = [
-        (f"approach drop point at {name}", lambda: arm_sim_client.move_to(above)),
-        (f"lower onto {name}", lambda: arm_sim_client.move_to(target)),
-        ("open gripper", lambda: arm_sim_client.open_gripper()),
-        (f"retreat from {name}", lambda: arm_sim_client.move_to(above)),
-    ]
-    return _run_sequence(f"Placed object at {name}.", steps)
-
-
-def _point_at(name: str, target) -> str:
-    result = arm_sim_client.move_to(target)
-    return _format(f"Pointing at {name}.", result)
-
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-def _run_sequence(success_msg: str, steps) -> str:
-    for label, action in steps:
-        result = action()
-        if result.get("status") != "success":
-            return f"Arm failed during '{label}': {result.get('message', result)}"
-    return success_msg
-
-
-def _format(success_msg: str, result: dict) -> str:
-    if result.get("status") == "success":
-        return success_msg
-    return f"Arm error: {result.get('message', result)}"
+    for label, fn, args in moves:
+        print(f"[arm_agent]   {label}")
+        result = fn(*args)
+        if isinstance(result, dict) and result.get("status") != "success":
+            return f"Arm failed at '{label}' for {block_name}: {result.get('message', result)}"
+        time.sleep(0.8)
+    return None
