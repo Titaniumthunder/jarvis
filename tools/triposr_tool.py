@@ -25,7 +25,7 @@ _TRIPOSR_SRC = paths.TRIPOSR_SRC
 if str(_TRIPOSR_SRC) not in sys.path:
     sys.path.insert(0, str(_TRIPOSR_SRC))
 
-OUTPUT_DIR = paths.SHAPE_E_OUTPUT
+OUTPUT_DIR = paths.MESH_OUTPUT
 CACHE_DIR  = str(paths.TRIPOSR_CACHE)
 
 # Run on CPU — MPS has precision issues with some TripoSR ops

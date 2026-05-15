@@ -11,7 +11,8 @@ import pathlib
 JARVIS_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 IMAGE_GEN_OUTPUT = JARVIS_ROOT / "image_gen_output"
-SHAPE_E_OUTPUT   = JARVIS_ROOT / "shape_e_output"
+# On-disk dir name kept as "shape_e_output" so existing meshes aren't orphaned.
+MESH_OUTPUT      = JARVIS_ROOT / "shape_e_output"
 PREVIEWS         = JARVIS_ROOT / "previews"
 BLENDER_SCRIPTS  = JARVIS_ROOT / "blender_scripts"
 CODE_OUTPUT      = JARVIS_ROOT / "code_output"
