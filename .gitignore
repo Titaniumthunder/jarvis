@@ -1,27 +1,50 @@
-.venv/
+# ─── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# ─── OS / editor cruft ────────────────────────────────────────────────────────
 .DS_Store
-triposr_src/
+
+# ─── Secrets ──────────────────────────────────────────────────────────────────
+.env
+.webui_secret_key
+
+# ─── Logs & runtime artifacts ─────────────────────────────────────────────────
+*.log
+MUJOCO_LOG.TXT
+_last_blender_session.json
+
+# ─── Generated output dirs ────────────────────────────────────────────────────
+code_output/
+image_gen_output/
+shape_e_output/
+previews/
+blender_scripts/
+jarvis_memory/
+
+# ─── Model weights / caches (would blow past GitHub's 100MB file cap) ─────────
+sd_model_cache/
+models/
+weights/
+checkpoints/
 *.safetensors
 *.pt
 *.bin
 *.ckpt
 *.zip
-models/
-weights/
-checkpoints/
-.env
-.webui_secret_key
-jarvis_memory/
-sd_model_cache/
-shape_e_output/
-image_gen_output/
 *.obj
-blender_scripts/*.py
+
+# ─── Vendored third-party (TripoSR lives next to the repo, not in it) ─────────
+triposr_src/
+
+# ─── Dead code (kept on disk but never tracked) ───────────────────────────────
 archive/
 
-# Runtime artifacts
-_last_blender_session.json
-code_output/
-previews/MUJOCO_LOG.TXT
+# ─── Assistant tooling (dev-machine local config; not part of the project) ───
+.claude/
+.claude-flow/
+CLAUDE.md
