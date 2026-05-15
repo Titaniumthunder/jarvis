@@ -19,7 +19,6 @@ if not BRAVE_API_KEY:
     raise RuntimeError("BRAVE_API_KEY not set. Add it to .env or your shell.")
 
 BRAVE_SEARCH_URL  = "https://api.search.brave.com/res/v1/web/search"
-BRAVE_ANSWERS_URL = "https://api.search.brave.com/res/v1/summarizer/search"
 MAX_RESULTS = 5
 
 
@@ -133,47 +132,3 @@ def _brave_search(query: str) -> tuple:
         return [], ""
 
 
-def _brave_answer(summary_key: str) -> str:
-    """
-    Fetch the AI-generated answer from Brave using the summary key.
-    """
-    params = urllib.parse.urlencode({
-        "key": summary_key,
-        "entity_info": 1,
-    })
-    url = f"{BRAVE_ANSWERS_URL}?{params}"
-
-    try:
-        req = urllib.request.Request(
-            url,
-            headers={
-                "Accept": "application/json",
-                "Accept-Encoding": "gzip",
-                "X-Subscription-Token": BRAVE_API_KEY,
-            }
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            import gzip
-            raw = resp.read()
-            try:
-                data = json.loads(gzip.decompress(raw))
-            except Exception:
-                data = json.loads(raw)
-
-        # Extract answer text from summary segments
-        segments = data.get("summary", [])
-        if segments:
-            answer = " ".join(
-                seg.get("data", "")
-                for seg in segments
-                if seg.get("type") == "token"
-            ).strip()
-            if answer:
-                return answer
-
-        # Fallback: top-level answer field
-        return data.get("answer", {}).get("text", "")
-
-    except Exception as e:
-        print(f"[search_tool] Brave answers failed: {e}")
-        return ""
