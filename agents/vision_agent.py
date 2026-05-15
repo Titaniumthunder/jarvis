@@ -8,8 +8,6 @@
 #
 # Status: Not yet implemented — camera integration = future phase.
 
-from tools.llm_tool import FAST_MODEL  # noqa: F401 — imported so model is ready to use
-
 # When camera is connected, these will be the real imports:
 # import cv2
 # from ultralytics import YOLO
