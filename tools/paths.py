@@ -20,7 +20,12 @@ SD_MODEL_CACHE   = JARVIS_ROOT / "sd_model_cache"
 TRIPOSR_CACHE    = JARVIS_ROOT / "triposr_cache"
 TRIPOSR_SRC      = JARVIS_ROOT / "triposr_src"
 
-MEMORY_VAULT = pathlib.Path.home() / "Documents" / "Jarvis Memory"
+# Obsidian vault. Lives OUTSIDE the repo (it holds personal data and must never
+# be committed) as a sibling of JARVIS_ROOT. Override with JARVIS_MEMORY_VAULT
+# if your vault lives somewhere else.
+MEMORY_VAULT = pathlib.Path(
+    os.environ.get("JARVIS_MEMORY_VAULT", JARVIS_ROOT.parent / "Jarvis Memory")
+)
 
 # External tools — read from env with sensible Mac defaults
 BLENDER_PATH = os.environ.get(

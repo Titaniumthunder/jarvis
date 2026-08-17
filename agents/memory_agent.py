@@ -2,8 +2,7 @@
 # Reads and writes to the Obsidian vault so Jarvis can remember things
 # across conversations.
 #
-# Vault structure:
-#   ~/Documents/Jarvis Memory/
+# Vault structure (location comes from tools.paths.MEMORY_VAULT):
 #     preferences.md       — user preferences and hardware info
 #     facts.md             — general facts the user has told Jarvis
 #     projects/<name>.md   — per-project notes
@@ -12,9 +11,9 @@
 
 import pathlib
 import datetime
-from tools import llm_tool
+from tools import llm_tool, paths
 
-VAULT = pathlib.Path.home() / "Documents" / "Jarvis Memory"
+VAULT = paths.MEMORY_VAULT
 
 SUMMARISE_SYSTEM = """You are a memory assistant for an AI called Jarvis.
 Your job is to extract key facts worth remembering from a conversation and
