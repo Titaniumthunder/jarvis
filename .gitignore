@@ -26,6 +26,10 @@ previews/
 blender_scripts/
 jarvis_memory/
 
+# ─── Training data (personal interaction logs — never commit) ─────────────────
+training_data/
+adapters/
+
 # ─── Model weights / caches (would blow past GitHub's 100MB file cap) ─────────
 sd_model_cache/
 models/

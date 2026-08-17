@@ -4,6 +4,7 @@
 #   ./jarvis          → voice mode (mic + Whisper)
 #   ./jarvis --text   → text mode (type commands)
 #   ./jarvis --silent → text mode, no spoken replies
+#   ./jarvis --stats  → show accumulated training-data stats
 
 # Move to the jarvis folder no matter where you run this from
 cd "$(dirname "$0")"

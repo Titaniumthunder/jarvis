@@ -8,14 +8,19 @@ load_dotenv()
 #   python main.py           → full voice mode (mic → Whisper → brain → agents)
 #   python main.py --text    → text mode for testing without mic
 #   python main.py --silent  → text mode with no spoken output (faster for debugging)
+#   python main.py --stats   → print accumulated training-data stats and exit
 
 import sys
+import time
 import brain
 import orchestrator
-from tools import tts_tool
+from tools import tts_tool, interaction_logger
 
 # Set to False if you want to skip spoken output (e.g. late at night)
 SPEAK_REPLIES = "--silent" not in sys.argv
+
+# Groups this CLI session's turns so a clarify-then-retry reads as one intent.
+CONVERSATION_ID = interaction_logger.new_conversation()
 
 
 def voice_loop():
@@ -62,6 +67,7 @@ def _handle(text: str, _depth: int = 0):
     If the brain asks for clarification, prompt the user and retry once with the full context.
     _depth prevents infinite clarification loops (max 2 rounds).
     """
+    _t0      = time.time()
     response = brain.ask(text)
     action   = response.get("action", "unknown")
 
@@ -70,6 +76,18 @@ def _handle(text: str, _depth: int = 0):
         params     = response.get("params", {})
         question   = params.get("question", response.get("reply", "Could you clarify?"))
         best_guess = params.get("best_guess", "").strip()
+
+        # A clarify turn never reaches the orchestrator, so log it here.
+        # These are valuable training data: the brain telling us it couldn't
+        # classify the request.
+        interaction_logger.log_turn(
+            user_message=text,
+            brain_response=response,
+            agent_result=question,
+            source="cli",
+            conversation_id=CONVERSATION_ID,
+            latency_ms=int((time.time() - _t0) * 1000),
+        )
 
         print(f"\nJarvis: {question}\n")
         _speak(question)
@@ -106,6 +124,17 @@ def _handle(text: str, _depth: int = 0):
 
     # ── Normal response ───────────────────────────────────────────────────────
     result = orchestrator.dispatch(response)
+
+    # Fire-and-forget: enqueue only, no file I/O on this path.
+    interaction_logger.log_turn(
+        user_message=text,
+        brain_response=response,
+        agent_result=result,
+        source="cli",
+        conversation_id=CONVERSATION_ID,
+        latency_ms=int((time.time() - _t0) * 1000),
+    )
+
     print(f"\nJarvis: {result}\n")
     _speak(result)
 
@@ -117,7 +146,10 @@ def _speak(text: str):
 
 
 if __name__ == "__main__":
-    if "--text" in sys.argv:
+    if "--stats" in sys.argv:
+        from tools import training_stats
+        training_stats.main()
+    elif "--text" in sys.argv:
         text_loop()
     else:
         voice_loop()

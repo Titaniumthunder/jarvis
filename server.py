@@ -37,6 +37,7 @@ from pydantic import BaseModel
 sys.path.insert(0, str(Path(__file__).parent))
 import brain
 import orchestrator
+from tools import interaction_logger
 
 # ── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI(title="Jarvis")
@@ -62,6 +63,10 @@ HEARTBEAT_TIMEOUT = 60           # seconds before assuming browser closed
 # Keeps last 10 exchanges so the memory agent has context
 CONVERSATION_BUFFER: list = []
 MAX_BUFFER = 10
+
+# Groups this server run's turns together so the training logger can tell a
+# clarify-then-retry sequence apart from unrelated turns.
+CONVERSATION_ID = interaction_logger.new_conversation()
 
 
 # ── Ollama lifecycle ──────────────────────────────────────────────────────────
@@ -301,10 +306,25 @@ async def stream(stream_id: str):
 
 async def _run_agent_and_fill_stream(stream_id, message, brain_response, action, reply, params):
     """Run the agent in the background and fill the stream slot when done."""
+    _t0 = time.time()
     try:
         agent_result = await asyncio.to_thread(orchestrator.dispatch, brain_response)
     except Exception as e:
         agent_result = f"Agent error: {e}"
+
+    # Log the turn as training data. Fire-and-forget: this only enqueues, and
+    # the SSE consumer is still blocked on STREAMS[stream_id] below, so it
+    # cannot affect response latency.
+    # Deliberately OUTSIDE the auto-memory skip list — clarify/unknown turns
+    # are the brain reporting its own failure, which is the best signal we get.
+    interaction_logger.log_turn(
+        user_message=message,
+        brain_response=brain_response,
+        agent_result=agent_result,
+        source="web",
+        conversation_id=CONVERSATION_ID,
+        latency_ms=int((time.time() - _t0) * 1000),
+    )
 
     # Track conversation for auto-memory
     _SKIP_MEMORY_ACTIONS = {"get_time", "clarify", "unknown", "remember", "recall"}
