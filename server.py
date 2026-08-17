@@ -210,8 +210,12 @@ If there is nothing worth remembering, respond with EXACTLY:
 NOTHING"""
 
         prompt = f"User: {user_message}\nJarvis: {jarvis_reply}"
+        # 400, not 60: gpt-oss are reasoning models and their reasoning tokens
+        # count against max_tokens. At 60 the whole budget went to reasoning and
+        # content came back empty (finish_reason=length), silently killing
+        # auto-memory. 300 was the measured floor for this prompt.
         result = await asyncio.to_thread(
-            llm_tool.ask, prompt, EXTRACT_SYSTEM, llm_tool.FAST_MODEL, 0.1, 60
+            llm_tool.ask, prompt, EXTRACT_SYSTEM, llm_tool.FAST_MODEL, 0.1, 400
         )
 
         result = result.strip()

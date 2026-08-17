@@ -110,8 +110,10 @@ def _recall(query: str) -> str:
     return llm_tool.ask(
         f"The user asked: '{query}'\n\nRelevant memories:\n{raw}\n\nAnswer the question naturally.",
         system=RECALL_SYSTEM,
+        # 400, not 150: reasoning tokens on gpt-oss count against max_tokens,
+        # so 150 truncated recall answers mid-sentence.
         temperature=0.2,
-        max_tokens=150,
+        max_tokens=400,
     )
 
 

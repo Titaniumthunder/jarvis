@@ -1,8 +1,13 @@
 # llm_tool.py
 # Shared LLM helper for all Jarvis agents.
 #
-# Primary: Groq (Llama 3.3 70B) — free, fast, smart
+# Primary: Groq (gpt-oss) — free and fast
 # Fallback: local Ollama (Gemma4) — if Groq is unavailable
+#
+# SMART_MODEL is the 120b: agents generate code and prose, where the extra
+# quality is worth ~300ms. FAST_MODEL is the 20b, used for background work
+# like auto-memory extraction where latency matters more than nuance.
+# Brain routing uses its own (smaller) model — see groq_tool.py.
 #
 # All agents import ask() from here — swapping the backend is a one-line change.
 
@@ -11,8 +16,8 @@ import base64
 import pathlib
 
 OLLAMA_URL  = "http://localhost:11434/api/generate"
-FAST_MODEL  = "llama-3.3-70b-versatile"
-SMART_MODEL = "llama-3.3-70b-versatile"
+FAST_MODEL  = "openai/gpt-oss-20b"
+SMART_MODEL = "openai/gpt-oss-120b"
 
 
 def ask(

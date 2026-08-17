@@ -1,8 +1,13 @@
 # groq_tool.py
 # Groq API helper — fast cloud LLM, completely free, no credit card.
 #
-# Model: Llama 3.3 70B — smarter than local Gemma4, ~500 tok/sec on Groq's chips
-# Free limits: 14,400 requests/day, 500,000 tokens/day — more than enough
+# Model: gpt-oss-20b — used for brain routing (JSON action classification).
+# Scored 10/10 on the brain's own action set at ~450ms median, vs ~740ms for
+# gpt-oss-120b, so the smaller model wins on the hot path that blocks the
+# user's first response. Agents use the larger model — see llm_tool.py.
+#
+# Note: the free tier throttles hard under burst — rapid consecutive calls hit
+# rate-limit backoff and can appear to hang for 20s+. Space out chained calls.
 #
 # Falls back to local Ollama (Gemma4) if Groq is unavailable.
 
@@ -12,8 +17,8 @@ import os
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 if not GROQ_API_KEY:
     raise RuntimeError("GROQ_API_KEY not set. Add it to .env or your shell.")
-FAST_MODEL   = "llama-3.3-70b-versatile"
-SMART_MODEL  = "llama-3.3-70b-versatile"
+FAST_MODEL   = "openai/gpt-oss-20b"
+SMART_MODEL  = "openai/gpt-oss-20b"
 
 _client = None
 
