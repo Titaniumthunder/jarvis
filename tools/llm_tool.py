@@ -15,7 +15,13 @@ import requests
 import base64
 import pathlib
 
-OLLAMA_URL  = "http://localhost:11434/api/generate"
+# Local Ollama: the fallback for every cloud call, and the only backend for
+# vision (Groq's gpt-oss models are text-only). brain.py and server.py read
+# these too, so the endpoint and model are defined exactly once.
+OLLAMA_BASE  = "http://localhost:11434"
+OLLAMA_URL   = f"{OLLAMA_BASE}/api/generate"
+OLLAMA_MODEL = "gemma4:latest"
+
 FAST_MODEL  = "openai/gpt-oss-20b"
 SMART_MODEL = "openai/gpt-oss-120b"
 
@@ -37,6 +43,9 @@ def ask(
         return groq_ask(
             prompt=prompt,
             system=system,
+            # Forward the caller's model. Without this every agent silently
+            # got groq_tool's default (the 20b), whatever it asked for.
+            model=model,
             temperature=temperature,
             max_tokens=max_tokens,
             expect_json=expect_json,
@@ -47,7 +56,7 @@ def ask(
     # Ollama fallback
     full_prompt = f"{system}\n\n{prompt}".strip() if system else prompt
     payload = {
-        "model": "gemma4:latest",
+        "model": OLLAMA_MODEL,
         "prompt": full_prompt,
         "stream": False,
         "options": {"temperature": temperature, "num_predict": max_tokens},
@@ -71,13 +80,17 @@ def ask_with_image(
     prompt: str,
     image_path: str,
     system: str = "",
-    model: str = SMART_MODEL,
+    model: str = OLLAMA_MODEL,
     temperature: float = 0.2,
     max_tokens: int = 2000,
 ) -> str:
     """
     Send a prompt + image to Ollama (vision/multimodal).
     Gemma4 supports image input — pass the image as base64.
+
+    This always goes to Ollama, so `model` must be a local vision model. It
+    used to default to SMART_MODEL — a Groq model name Ollama doesn't have —
+    which 404'd every image-guided Blender request.
 
     Args:
         prompt:     The question or instruction.
@@ -120,3 +133,17 @@ def ask_with_image(
         return "[llm_tool] ERROR: Ollama timed out."
     except Exception as e:
         return f"[llm_tool] ERROR: {e}"
+
+
+def strip_fences(text: str) -> str:
+    """Remove a markdown code fence the model wrapped around its output.
+
+    Drops a leading ```lang line and a trailing ``` line, each only if present.
+    Shared by every agent that asks an LLM for raw code or diagram syntax.
+    """
+    lines = (text or "").strip().splitlines()
+    if lines and lines[0].lstrip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+    return "\n".join(lines).strip()

@@ -27,6 +27,13 @@ MEMORY_VAULT = pathlib.Path(
     os.environ.get("JARVIS_MEMORY_VAULT", JARVIS_ROOT.parent / "Jarvis Memory")
 )
 
+# Interaction logs for future LoRA fine-tuning (personal data — gitignored).
+# Override with JARVIS_TRAINING_DATA, e.g. to point a test run at a scratch dir
+# so synthetic test turns never land in the real dataset.
+TRAINING_DATA = pathlib.Path(
+    os.environ.get("JARVIS_TRAINING_DATA", JARVIS_ROOT / "training_data")
+)
+
 # External tools — read from env with sensible Mac defaults
 BLENDER_PATH = os.environ.get(
     "JARVIS_BLENDER_PATH",

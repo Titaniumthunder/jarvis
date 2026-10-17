@@ -27,7 +27,7 @@ import uuid
 
 from tools import paths
 
-TRAINING_DATA = paths.JARVIS_ROOT / "training_data"
+TRAINING_DATA = paths.TRAINING_DATA   # JARVIS_TRAINING_DATA overrides
 TURNS_DIR     = TRAINING_DATA / "turns"
 FEEDBACK_DIR  = TRAINING_DATA / "feedback"
 
@@ -58,7 +58,10 @@ _CORRECTION_PATTERNS = [
 ]
 
 _POSITIVE_PATTERNS = [
-    r"^remember\s+(this|that)\b",
+    # Only a bare "remember this/that" is praise for the previous turn.
+    # "remember that my printer is X" is a memory command, not feedback, so
+    # this pattern has to match the whole message.
+    r"^remember\s+(this|that)\s*[.!]*$",
     r"^perfect\b",
     r"^that'?s\s+(right|correct|it)\b",
     r"^exactly\b",

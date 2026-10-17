@@ -22,7 +22,6 @@ import asyncio
 import time
 import uuid
 import json
-import queue
 import subprocess
 import requests as req
 from pathlib import Path
@@ -37,7 +36,7 @@ from pydantic import BaseModel
 sys.path.insert(0, str(Path(__file__).parent))
 import brain
 import orchestrator
-from tools import interaction_logger
+from tools import interaction_logger, llm_tool, paths
 
 # ── App setup ────────────────────────────────────────────────────────────────
 app = FastAPI(title="Jarvis")
@@ -49,9 +48,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static",   StaticFiles(directory="static"),          name="static")
-app.mount("/previews", StaticFiles(directory="previews"),         name="previews")
-app.mount("/images",   StaticFiles(directory="image_gen_output"), name="images")
+# Absolute paths so the server works from any cwd. The output dirs are created
+# up front: they're gitignored, so a fresh clone doesn't have them, and
+# StaticFiles refuses to mount a directory that doesn't exist.
+STATIC_DIR = paths.JARVIS_ROOT / "static"
+for _d in (paths.PREVIEWS, paths.IMAGE_GEN_OUTPUT):
+    _d.mkdir(parents=True, exist_ok=True)
+
+app.mount("/static",   StaticFiles(directory=str(STATIC_DIR)),            name="static")
+app.mount("/previews", StaticFiles(directory=str(paths.PREVIEWS)),         name="previews")
+app.mount("/images",   StaticFiles(directory=str(paths.IMAGE_GEN_OUTPUT)), name="images")
 
 # ── State ─────────────────────────────────────────────────────────────────────
 OLLAMA_PROC      = None          # Popen handle if WE started ollama
@@ -73,7 +79,7 @@ CONVERSATION_ID = interaction_logger.new_conversation()
 
 def ollama_is_running() -> bool:
     try:
-        req.get("http://localhost:11434/api/tags", timeout=2)
+        req.get(f"{llm_tool.OLLAMA_BASE}/api/tags", timeout=2)
         return True
     except Exception:
         return False
@@ -150,7 +156,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 async def index():
-    return FileResponse("static/index.html")
+    return FileResponse(str(STATIC_DIR / "index.html"))
 
 
 @app.get("/health")
@@ -241,7 +247,10 @@ async def chat(req: ChatRequest):
     if not message:
         return JSONResponse({"error": "Empty message"}, status_code=400)
 
-    # Brain is fast (~1s via Groq) — run it now before returning
+    # Brain is fast (~1s via Groq) — run it now before returning.
+    # t0 is taken before the brain so the logged latency is end-to-end
+    # (brain + agent), matching what the CLI records.
+    t0 = time.time()
     brain_response = await asyncio.to_thread(brain.ask, message)
     action = brain_response.get("action", "unknown")
     reply  = brain_response.get("reply", "")
@@ -253,7 +262,7 @@ async def chat(req: ChatRequest):
 
     # Run the agent in the background — fills STREAMS[stream_id] when done
     asyncio.create_task(_run_agent_and_fill_stream(
-        stream_id, message, brain_response, action, reply, params
+        stream_id, message, brain_response, action, reply, params, t0
     ))
 
     return {
@@ -308,9 +317,12 @@ async def stream(stream_id: str):
     )
 
 
-async def _run_agent_and_fill_stream(stream_id, message, brain_response, action, reply, params):
-    """Run the agent in the background and fill the stream slot when done."""
-    _t0 = time.time()
+async def _run_agent_and_fill_stream(stream_id, message, brain_response, action, reply, params, t0):
+    """Run the agent in the background and fill the stream slot when done.
+
+    t0 is when /chat received the message (before the brain ran), so the
+    logged latency covers brain + agent, same as the CLI.
+    """
     try:
         agent_result = await asyncio.to_thread(orchestrator.dispatch, brain_response)
     except Exception as e:
@@ -327,7 +339,7 @@ async def _run_agent_and_fill_stream(stream_id, message, brain_response, action,
         agent_result=agent_result,
         source="web",
         conversation_id=CONVERSATION_ID,
-        latency_ms=int((time.time() - _t0) * 1000),
+        latency_ms=int((time.time() - t0) * 1000),
     )
 
     # Track conversation for auto-memory

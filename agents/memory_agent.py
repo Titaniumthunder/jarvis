@@ -9,7 +9,6 @@
 #     people/<name>.md     — notes about people
 #     conversations/       — daily conversation summaries (auto-written)
 
-import pathlib
 import datetime
 from tools import llm_tool, paths
 

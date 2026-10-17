@@ -1,5 +1,5 @@
 # brain.py
-# The LLM "brain" for Jarvis — sends user commands to Groq (Llama 3.3 70B),
+# The LLM "brain" for Jarvis — sends user commands to Groq (gpt-oss-20b),
 # with Ollama (Gemma4) as the local fallback, and gets back structured JSON
 # telling the orchestrator what to do.
 #
@@ -14,7 +14,7 @@
 
 import json
 import requests
-from tools import groq_tool
+from tools import groq_tool, llm_tool
 
 # ── Action library ───────────────────────────────────────────────────────────
 # Every action Jarvis can perform lives here.
@@ -48,7 +48,7 @@ KNOWN_ACTIONS = {
 }
 
 # ── System prompt ────────────────────────────────────────────────────────────
-# This tells Llama 3 exactly what role it plays and what format to return.
+# This tells the model exactly what role it plays and what format to return.
 SYSTEM_PROMPT = """
 You are Jarvis, a local AI desktop assistant running on a Mac.
 You control a robot arm, manage files, run terminal commands,
@@ -192,7 +192,7 @@ Example — user says "make the teeth wider" or "refine it" or "fix it" or "add 
 
 def ask(user_message: str) -> dict:
     """
-    Send a message to Groq (Llama 3.3 70B), with Ollama fallback, and return the
+    Send a message to Groq (gpt-oss-20b), with Ollama fallback, and return the
     validated JSON response as a dict.
 
     Args:
@@ -212,18 +212,16 @@ def ask(user_message: str) -> dict:
     except Exception as e:
         print(f"[brain] Groq error: {e} — falling back to Ollama")
 
-    # Ollama fallback
-    OLLAMA_URL = "http://localhost:11434/api/generate"
-    MODEL_NAME = "gemma4:latest"
+    # Ollama fallback (endpoint and model are shared with llm_tool)
     payload = {
-        "model": MODEL_NAME,
+        "model": llm_tool.OLLAMA_MODEL,
         "prompt": prompt,
         "stream": False,
         "format": "json",
         "options": {"temperature": 0.2, "num_predict": 300}
     }
     try:
-        response = requests.post(OLLAMA_URL, json=payload, timeout=120)
+        response = requests.post(llm_tool.OLLAMA_URL, json=payload, timeout=120)
         response.raise_for_status()
         raw_text = response.json().get("response", "")
         return _parse_and_validate(raw_text, user_message)

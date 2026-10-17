@@ -11,12 +11,12 @@
 #      - Auto-rotate so it looks alive on first open
 #   3. We save the file and call `open` to launch it in the default browser
 
-import os
 import subprocess
-import pathlib
 
-# Where to save preview files
-OUTPUT_DIR = pathlib.Path.home() / "Personal Project" / "Desktop assistant" / "jarvis" / "previews"
+from tools import paths
+
+# Where to save preview files (the web UI serves this dir at /previews)
+OUTPUT_DIR = paths.PREVIEWS
 
 # ── HTML template ─────────────────────────────────────────────────────────────
 # Uses ES modules (importmap) — the correct approach for Three.js r150+

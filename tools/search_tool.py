@@ -50,7 +50,10 @@ def search_and_summarise(query: str) -> str:
     )
 
     print(f"[search_tool] Summarising with Ollama ({len(prompt)} chars)...")
-    answer = llm_tool.ask(prompt=prompt, temperature=0.1, max_tokens=300)
+    # 1000, not 300: this runs on the 120b agent model, whose reasoning tokens
+    # count against max_tokens. At 300 the summary was cut off mid-sentence
+    # (finish_reason=length) whenever the model reasoned at length.
+    answer = llm_tool.ask(prompt=prompt, temperature=0.1, max_tokens=1000)
 
     if not answer or answer.startswith("[llm_tool]"):
         # Fallback: just return the top snippet directly
@@ -113,13 +116,22 @@ def _brave_search(query: str) -> tuple:
             except Exception:
                 data = json.loads(raw)
 
-        # Extract web results
+        # Extract web results. Brave wraps query matches in <strong> tags and
+        # escapes characters as HTML entities; strip both so they don't leak
+        # into the summary (the UI shows text literally, so the tags appeared
+        # as raw "<strong>" in chat).
+        import html
+        import re
+
+        def _clean(s):
+            return html.unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
+
         results = []
         for item in data.get("web", {}).get("results", []):
             results.append({
-                "title":       item.get("title", ""),
+                "title":       _clean(item.get("title", "")),
                 "url":         item.get("url", ""),
-                "description": item.get("description", "") or item.get("extra_snippets", [""])[0],
+                "description": _clean(item.get("description", "") or item.get("extra_snippets", [""])[0]),
             })
 
         # Extract summary key for the answers endpoint

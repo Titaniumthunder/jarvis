@@ -310,12 +310,7 @@ def get_shape_definition(user_description: str) -> dict | None:
         print(f"[shape_tool] LLM error: {raw}")
         return None
 
-    # Strip markdown fences if present
-    text = raw.strip()
-    if text.startswith("```"):
-        lines = text.splitlines()
-        end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
-        text = "\n".join(lines[1:end])
+    text = llm_tool.strip_fences(raw)
 
     try:
         data = json.loads(text)
@@ -363,11 +358,7 @@ def _retry_with_strict_prompt(description: str) -> dict | None:
         max_tokens=400,
         expect_json=True,
     )
-    text = raw.strip()
-    if text.startswith("```"):
-        lines = text.splitlines()
-        end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
-        text = "\n".join(lines[1:end])
+    text = llm_tool.strip_fences(raw)
     try:
         data = json.loads(text)
         print(f"[shape_tool] Retry result: {len(data.get('profile', []))} points")

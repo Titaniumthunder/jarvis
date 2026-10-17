@@ -4,38 +4,45 @@
 
 ## Local-First, Cloud-Augmented Stack
 
-Jarvis runs locally on a Mac M5 Pro and stores all your data on disk. For
-inference speed it uses two cloud APIs by default, but every cloud call has a
-local fallback so the assistant keeps working with no internet and no API keys.
+Jarvis runs locally on a Mac M5 Pro and stores all your data on disk. Two cloud
+APIs are used by default for speed, and every cloud LLM call falls back to a
+local model if it fails.
 
 **Local components** (run on your machine, no network calls):
-- **Ollama + Gemma4** — brain reasoning, agent calls, search summarisation. Offline fallback for every cloud LLM call.
-- **Whisper (base)** — voice transcription
+- **Ollama + Gemma4** — offline fallback for every cloud LLM call, and the only vision model (image-guided Blender generation).
+- **Whisper (base)** — voice transcription (needs `ffmpeg` to decode recordings)
 - **SDXL-Turbo** — text → image (MPS, ~2 s)
 - **TripoSR** — image → 3D mesh (CPU, ~15 s)
-- **Obsidian vault** — long-term memory at `~/Documents/Jarvis Memory/`
+- **Obsidian vault** — long-term memory in a `Jarvis Memory` folder next to the repo (`JARVIS_MEMORY_VAULT` overrides)
 - **Blender + MCP socket** — local 3D modelling, no cloud calls
+- **Interaction logger** — training data for the future LoRA fine-tune, written to `training_data/`
 - **macOS `say`** — text-to-speech
 
-**Cloud components** (optional, behind API keys):
-- **Groq (Llama 3.3 70B)** — primary fast LLM in `brain.py`, `llm_tool.py`, and `diagram_agent.py`. Used for low-latency replies. Falls back to Ollama+Gemma4 if `GROQ_API_KEY` is unset or the call fails.
-- **Brave Search API** — used by `search_tool.py` for web search + AI summary. Required for the `web_search` action; with no key, web search is disabled but every other action still works.
-- **Gemini 2.0 Flash** — legacy `gemini_tool.py`, kept as an alternate LLM backend. Not on the default code path.
+**Cloud components** (behind API keys):
+- **Groq** — `gpt-oss-20b` for brain routing (`brain.py`), `gpt-oss-120b` for agents (via `llm_tool.py`). Every call falls back to Ollama+Gemma4 if it fails. Free tier: 8,000 tokens/min and 1,000 requests/day per model; the ~2,700-token brain prompt limits routing to about 3 requests a minute before Groq backs off.
+- **Brave Search API** — used by `search_tool.py` for web search. Required for the `web_search` action; without it, web search is disabled but every other action still works.
 
 ---
 
 ## Privacy & Offline Mode
 
-With **all three API keys left blank** in `.env`, Jarvis is fully offline:
-- The brain runs on Ollama+Gemma4 (slower but private).
-- All agent calls fall back to Ollama+Gemma4.
-- Voice, image-gen, 3D-gen, Blender, memory, and code agents already run locally — they don't change.
-- Only the `web_search` action stops working (Brave is required for that).
+Your data stays local: memory, generated files, and training data are all
+written to disk on this Mac. What leaves the machine is the text of each
+request (to Groq) and search queries (to Brave).
 
-The cloud calls are a **speed optimization, not a requirement.** If you want
-zero network egress, leave the keys empty and Jarvis will still answer
-questions, generate images, build 3D models, write code, and remember things
-— all from your local machine.
+Offline behaviour today:
+- If a Groq call fails at runtime (network down, rate limit, outage), the brain and every agent fall back to Ollama+Gemma4 automatically, and routing still picks the right action.
+- **Known gap:** `GROQ_API_KEY` must still be set for Jarvis to start — `tools/groq_tool.py` raises at import without it. A keyless, fully offline start needs that check moved to call time.
+- Without `BRAVE_API_KEY`, only `web_search` stops working.
+
+---
+
+## Phase 12 — Training-data logger & cleanup ✅ COMPLETE (Sep 2026)
+- **Interaction logger** (`tools/interaction_logger.py`) — every turn from the web UI and CLI is logged as JSONL training data for a future LoRA fine-tune. Corrections ("no, I meant…") label the previous turn negative, praise labels it positive, and `clarify`/`unknown` turns label themselves. A queue plus a daemon thread keep it off the request path (~9 µs per call). `./jarvis --stats` shows progress toward the 500-turn target.
+- **Groq model swap** — `llama-3.3-70b-versatile` was retired. Brain routing now uses `gpt-oss-20b` and agents use `gpt-oss-120b` (a bug had silently given agents the 20b; `llm_tool` now forwards the model). Token budgets were raised because gpt-oss reasoning tokens count against `max_tokens`.
+- **Memory vault path fix** — memory reads and writes had been going to a non-existent `~/Documents/Jarvis Memory`; they now use the real vault.
+- **Bug fixes** — image-guided Blender generation sent a Groq model name to Ollama (404) and now uses Gemma4; the server's static mounts no longer depend on the working directory, so a fresh clone starts; Brave's `<strong>` markup no longer leaks into search answers.
+- **Cleanup** — one shared `strip_fences()` helper; the Ollama endpoint and model are defined once; `diagram_agent` goes through `llm_tool` like every other agent (and gains the Ollama fallback); the unreachable `terminal_tool.py` and unused imports are gone.
 
 ---
 
@@ -125,6 +132,8 @@ questions, generate images, build 3D models, write code, and remember things
 - ❌ Removed `generate_blender` action (replaced by `generate_blender_mcp` / `generate_blender_cc`)
 - ❌ Removed `_generate_blender()` from cad_agent.py
 - ❌ Deleted `shap_e_model_cache/` → freed **4.9GB** of disk space
+- ❌ Removed `gemini_tool.py` (the Gemini backend was no longer used)
+- ❌ Removed `terminal_tool.py` (never imported — `run_command` uses computer_agent's own blocklist)
 
 ---
 
@@ -132,7 +141,9 @@ questions, generate images, build 3D models, write code, and remember things
 
 | Model | Size | Used for | Speed |
 |---|---|---|---|
-| `gemma4:latest` | 9.6GB | Brain + all agents | 66 tok/sec (Metal) |
+| `gpt-oss-20b` (Groq) | cloud | Brain routing | ~0.4 s when not rate-limited |
+| `gpt-oss-120b` (Groq) | cloud | Agents: answers, code, diagrams, search summaries | ~0.7 s when not rate-limited |
+| `gemma4:latest` | 9.6GB | Offline fallback + vision | 66 tok/sec (Metal) |
 | `gemma4:31b` | 20GB | Available, not default | 0.7 tok/sec |
 | Whisper base | 140MB | Voice transcription | fast |
 | SDXL-Turbo | 7GB | Text → image | ~2s (MPS) |
@@ -151,20 +162,20 @@ cd "/Users/alexsalamati/Personal Project/Desktop assistant/jarvis"
 
 ---
 
-## Full action library (24 actions)
+## Full action library (25 actions)
 
 | Action | Agent | Status |
 |---|---|---|
 | `get_time` | computer | ✅ |
 | `search_files` | computer | ✅ |
-| `web_search` | computer | ✅ Brave Search + Ollama summary |
+| `web_search` | computer | ✅ Brave Search + LLM summary |
 | `open_in_browser` | computer | ✅ |
 | `run_command` | computer | ✅ |
 | `generate_image` | cad | ✅ SDXL-Turbo, click to expand |
 | `generate_cad` | cad | ✅ Three.js preview |
 | `generate_shape_e` | cad | ✅ TripoSR pipeline |
 | `open_bambu` | cad | ⬜ STUB |
-| `generate_blender_mcp` | blender_mcp | ✅ Gemma4, image-guided |
+| `generate_blender_mcp` | blender_mcp | ✅ Image-guided (SDXL → Gemma4 vision → bpy) |
 | `refine_blender_mcp` | blender_mcp | ✅ Session memory |
 | `generate_blender_cc` | blender_cc | ✅ Claude Code sub-agent (default) |
 | `refine_blender_cc` | blender_cc | ✅ Claude Code refinement |
@@ -176,7 +187,8 @@ cd "/Users/alexsalamati/Personal Project/Desktop assistant/jarvis"
 | `recall` | memory | ✅ Natural language answer |
 | `generate_diagram` | diagram | ✅ Mermaid.js (flowcharts, logic gates) |
 | `watch_printer` | vision | ⬜ STUB (hardware needed) |
-| `move_arm` | arm | ✅ Simulated Franka Panda (MuJoCo) |
+| `move_arm` | arm | ✅ Simulated Franka Panda stacks 3 blocks (MuJoCo) |
+| `reset_blocks` | arm | ✅ Re-spawns the demo blocks at random positions |
 | `clarify` | none | ✅ |
 | `unknown` | none | ✅ |
 
@@ -190,6 +202,8 @@ cd "/Users/alexsalamati/Personal Project/Desktop assistant/jarvis"
 - [ ] Command history (up arrow in chat)
 - [ ] TTS in browser (Jarvis speaks back)
 - [ ] Markdown rendering in chat bubbles
+- [ ] Keyless offline start (move the Groq key check to call time)
+- [ ] LoRA fine-tune on logged turns (gated on 500 turns — `./jarvis --stats`)
 
 ### Hardware
 - [ ] Robot arm (servos + PCA9685 + Arduino + YOLO)

@@ -2,7 +2,7 @@
 # Generates Mermaid.js diagrams from a natural language description.
 # Supports: flowcharts, logic gates, sequence diagrams, class diagrams, state machines.
 
-from tools import groq_tool
+from tools import llm_tool
 
 DIAGRAM_SYSTEM = """You are a Mermaid.js diagram generator.
 The user will describe a diagram and you must return ONLY valid Mermaid.js syntax.
@@ -59,24 +59,16 @@ def run(params: dict) -> str:
 
     prompt = f"Generate a Mermaid.js diagram for: {description}"
 
-    try:
-        raw = groq_tool.ask(prompt, system=DIAGRAM_SYSTEM, temperature=0.2, max_tokens=600)
-        code = _strip_fences(raw)
-        if not code:
-            return "DIAGRAM_ERROR: Got empty response"
-        print(f"[diagram_agent] Generated {len(code)} chars of Mermaid")
-        return f"DIAGRAM:{code}"
-    except Exception as e:
-        print(f"[diagram_agent] Error: {e}")
-        return f"DIAGRAM_ERROR: {e}"
+    # Goes through llm_tool like every other agent, so diagrams get the agent
+    # model and the Ollama fallback instead of a Groq-only call of their own.
+    # llm_tool reports failures as a string rather than raising.
+    raw = llm_tool.ask(prompt, system=DIAGRAM_SYSTEM, temperature=0.2, max_tokens=600)
+    if raw.startswith("[llm_tool] ERROR"):
+        print(f"[diagram_agent] Error: {raw}")
+        return f"DIAGRAM_ERROR: {raw}"
 
-
-def _strip_fences(text: str) -> str:
-    """Remove optional ```mermaid ... ``` fences that the LLM might include."""
-    text = text.strip()
-    if text.startswith("```"):
-        lines = text.splitlines()
-        start = 1
-        end = len(lines) - 1 if lines and lines[-1].strip() == "```" else len(lines)
-        text = "\n".join(lines[start:end]).strip()
-    return text
+    code = llm_tool.strip_fences(raw)
+    if not code:
+        return "DIAGRAM_ERROR: Got empty response"
+    print(f"[diagram_agent] Generated {len(code)} chars of Mermaid")
+    return f"DIAGRAM:{code}"

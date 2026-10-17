@@ -73,11 +73,14 @@ def _generate_html_preview(description: str, filename: str) -> str:
             system=THREEJS_FREEFORM_PROMPT,
             model=SMART_MODEL,
             temperature=0.15,
-            max_tokens=1000,
+            # 3000, not 1000: on the 120b, reasoning tokens count against the
+            # budget. A toy car used all 1000 and came back cut off mid-function,
+            # which leaves the preview with broken JavaScript.
+            max_tokens=3000,
         )
         if geometry_code.startswith("[llm_tool]"):
             return geometry_code
-        geometry_code = _strip_fences(geometry_code)
+        geometry_code = _clean_geometry_code(geometry_code)
         name = description
 
     html_path = html_preview_tool.generate_and_open(geometry_code, name)
@@ -108,12 +111,10 @@ def _generate_shape_e(description: str) -> str:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _strip_fences(text: str) -> str:
-    text = text.strip()
-    if text.startswith("```"):
-        lines = text.splitlines()
-        end   = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
-        text  = "\n".join(lines[1:end]).strip()
+def _clean_geometry_code(text: str) -> str:
+    """Strip code fences, then unwrap a createModel() declaration if the model
+    returned the whole function rather than just its body."""
+    text = llm_tool.strip_fences(text)
     match = re.match(
         r'^\s*function\s+createModel\s*\(\s*\)\s*\{([\s\S]*)\}\s*$', text)
     if match:

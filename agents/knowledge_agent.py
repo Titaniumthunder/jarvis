@@ -3,7 +3,7 @@
 #
 #   1. Meta questions about Jarvis  → instant hardcoded capabilities answer
 #   2. General knowledge            → ask LLM directly (it already knows)
-#   3. LLM doesn't know             → fall back to Google web search
+#   3. LLM doesn't know             → fall back to Brave web search
 #
 # File-reading (the old approach) is no longer the default — the LLM's built-in
 # knowledge covers 99% of general questions faster and better than scanning files.
@@ -60,7 +60,7 @@ def run(command: dict) -> str:
     Answer a question using a three-tier fallback:
       1. Meta/capability questions → instant answer
       2. General knowledge         → LLM from its own training
-      3. LLM unsure                → Google web search
+      3. LLM unsure                → Brave web search
 
     Expected command keys:
         question (str): the question to answer
@@ -88,7 +88,10 @@ def run(command: dict) -> str:
         system=system,
         model=SMART_MODEL,
         temperature=0.2,
-        max_tokens=400,
+        # 1000, not 400: reasoning tokens count against the budget on the 120b.
+        # A technical question used 385 of 400. The system prompt keeps answers
+        # short; this is only the ceiling, so raising it costs nothing.
+        max_tokens=1000,
     )
 
     # ── Tier 3: LLM doesn't know → fall back to web search ───────────────────

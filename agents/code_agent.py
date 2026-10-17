@@ -75,7 +75,7 @@ def _write_code(command: dict) -> str:
         f"Output ONLY the code. No explanations, no markdown, no backticks."
     )
     code = llm_tool.ask(prompt, system=CODE_SYSTEM, temperature=0.2, max_tokens=2000)
-    code = _strip_fences(code)
+    code = llm_tool.strip_fences(code)
 
     result = file_tool.write_file(str(save_path), code)
     print(f"[code_agent] {result}")
@@ -105,7 +105,7 @@ def _edit_file(command: dict) -> str:
         f"Return the COMPLETE updated file. Output ONLY the code, no explanations, no backticks."
     )
     updated = llm_tool.ask(prompt, system=CODE_SYSTEM, temperature=0.2, max_tokens=3000)
-    updated = _strip_fences(updated)
+    updated = llm_tool.strip_fences(updated)
 
     result = file_tool.write_file(filepath, updated)
     print(f"[code_agent] {result}")
@@ -132,15 +132,3 @@ def _explain_code(command: dict) -> str:
         f"Explain what this code does in plain English. Be concise."
     )
     return llm_tool.ask(prompt, system=CODE_SYSTEM, temperature=0.3, max_tokens=800)
-
-
-# ── helpers ───────────────────────────────────────────────────────────────────
-
-def _strip_fences(code: str) -> str:
-    """Remove markdown code fences if the model wrapped the output."""
-    lines = code.strip().splitlines()
-    if lines and lines[0].startswith("```"):
-        lines = lines[1:]
-    if lines and lines[-1].strip() == "```":
-        lines = lines[:-1]
-    return "\n".join(lines).strip()

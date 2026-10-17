@@ -106,17 +106,17 @@ def _handle(text: str, _depth: int = 0):
             # If Jarvis made a best guess and user confirmed with yes/yep/yeah/correct
             YES_WORDS = {"yes", "yeah", "yep", "yup", "correct", "right", "exactly", "sure", "ok", "okay"}
             if best_guess and clarification.lower().strip(" .!?") in YES_WORDS:
-                # User confirmed the best guess — re-run with the corrected command
-                corrected = text.lower().replace(
-                    text.split()[-1],  # replace last word (the misheard part)
-                    best_guess
-                ) if best_guess else text
-                print(f"[main] Confirmed: running with '{corrected}'")
-                _handle(corrected, _depth=_depth + 1)
-            else:
-                # User gave a real clarification — combine with original intent
-                combined = f"{text}. To clarify: {clarification}"
-                _handle(combined, _depth=_depth + 1)
+                # User confirmed the best guess. Hand the brain the original request
+                # plus the confirmed guess instead of splicing the guess into the
+                # sentence: swapping the last word garbled multi-word guesses
+                # ("open flappy bot" -> "open flappy flappy-bot") and silently
+                # dropped the guess whenever that word had a capital letter.
+                print(f"[main] Confirmed best guess: {best_guess}")
+                clarification = f"yes, I meant {best_guess}"
+
+            # Combine the answer with the original intent and ask the brain again.
+            combined = f"{text}. To clarify: {clarification}"
+            _handle(combined, _depth=_depth + 1)
 
         except Exception as e:
             print(f"[main] Clarification error: {e}")
